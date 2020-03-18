@@ -12,7 +12,7 @@ var Strategy = require('passport-twitter').Strategy
 var config = require('./config')
 
 var indexRouter = require('./routes/index')
-var usersRouter = require('./routes/users')
+var gameRouter = require('./routes/game')
 
 /**
  * Twitterを利用した認証の戦略オブジェクトを設定
@@ -70,7 +70,7 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 app.use('/', indexRouter)
-app.use('/users', usersRouter)
+app.use('/game', gameRouter)
 
 // Twitterに対して認証処理
 app.get('/login/twitter', passport.authenticate('twitter'))
