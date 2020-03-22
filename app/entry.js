@@ -55,3 +55,20 @@ function ticker() {
 }
 // 33ミリ秒ごとに実行
 setInterval(ticker, 33)
+
+/**
+ * レーダーの描画処理
+ * ※レーダーは半透明の緑色の扇を回転するようにして表現
+ * @param {object} ctxRader レーダーの現在の状況
+ */
+function drawRader(ctxRader) {
+  // 中心座標のx軸
+  const x = gameObj.raderCanvasWidth / 2
+  // 中心座標のy軸
+  const y = gameObj.raderCanvasHeight / 2
+  // 半径 = 対角線の長さの半分とする
+  const r = (gameObj.raderCanvasWidth * 1.5) / 2
+
+  // 現在のキャンバスの状態をセーブ
+  ctxRader.save()
+}
