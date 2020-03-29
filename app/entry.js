@@ -1,5 +1,6 @@
 'use strict'
 import $ from 'jquery'
+import io from 'socket.io-client'
 
 // ゲームで使用するパラメータをオブジェクトにする
 const gameObj = {
@@ -11,6 +12,13 @@ const gameObj = {
   myDisplayName: $('#main').attr('data-displayName'),
   myThumbUrl: $('#main').attr('data-thumbUrl')
 }
+
+// WebSocketを開始するクライアントのTwitterアカウント名とサムネをパラメータとして結合
+const socketQueryParameters = `displayName=${gameObj.myDisplayName}&thumbUrl=${gameObj.myThumbUrl}`
+// サーバーのIPアドレスに対してWebSocket通信を開始するリクエストを送信
+const socket = io(
+  $('#main').attr('data-ipAddress') + '?' + socketQueryParameters
+)
 
 /**
  * 最初に実行する関数（ゲーム準備）
