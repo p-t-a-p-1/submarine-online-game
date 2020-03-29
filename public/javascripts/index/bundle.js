@@ -155,7 +155,7 @@ function drawRader(ctxRader) {
    * 扇の弧の部分を原点(0, 0)を中心にして半径rで30度分描画する
    * → 上で原点を(x, y)にしてるので、canvasの中心から半径rの円弧を30度だけ描画することになる
    */
-  ctxRader.arc(0, 0, getRadian(0), getRadian(-30), true);
+  ctxRader.arc(0, 0, r, getRadian(0), getRadian(-30), true);
   // 円弧を描いた筆で中心に向かって線を描画
   ctxRader.lineTo(0, 0);
 
@@ -166,6 +166,35 @@ function drawRader(ctxRader) {
   ctxRader.restore();
   // 角度を5度足す
   gameObj.deg = (gameObj.deg + 5) % 360;
+}
+
+/**
+ * 潜水艦の画像を表示する
+ * @param {object} ctxRader レーダーの現在の状況
+ */
+function drawSubmarine(ctxRader) {
+  // canvasの状態を保存
+  ctxRader.save();
+
+  // 座標をcanvasの中心に設定
+  ctxRader.translate(gameObj.raderCanvasWidth / 2, gameObj.raderCanvasHeight / 2);
+
+  // 潜水艦画像の表示
+  ctxRader.drawImage(gameObj.submarineImage, // 画像ファイル
+  -(gameObj.submarineImage.width / 2), // x軸の表示位置（画像widthの半分の長さ分マイナス）
+  -(gameObj.submarineImage.height / 2) // y軸の表示位置（画像heightの半分の長さ分マイナス）
+  );
+
+  ctxRader.restore();
+}
+
+/**
+ * 角度をラジアンに変換する
+ * @param {int} kakudo 角度
+ */
+function getRadian(kakudo) {
+  // radian = 角度 * π / 180
+  return kakudo * Math.PI / 180;
 }
 
 /***/ }),
