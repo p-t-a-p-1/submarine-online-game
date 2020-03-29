@@ -93,7 +93,7 @@ function drawRader(ctxRader) {
   // 描画したエリアを塗りつぶす
   ctxRader.fill()
 
-  // 元の設定を取得
+  // 描画状態を保存した時点のものに戻す
   ctxRader.restore()
   // 角度を5度足す
   gameObj.deg = (gameObj.deg + 5) % 360
@@ -120,6 +120,7 @@ function drawSubmarine(ctxRader) {
     -(gameObj.submarineImage.height / 2) // y軸の表示位置（画像heightの半分の長さ分マイナス）
   )
 
+  // 描画状態を保存した時点のものに戻す
   ctxRader.restore()
 }
 
