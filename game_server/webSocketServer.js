@@ -29,7 +29,7 @@ function createWebSocketServer(io, game) {
      * 接続できたユーザーにデータを送信する
      * start-dataという名前のデータを送っているが、送信するデータはまだ空オブジェクト
      */
-    socket.emit('start-data', {})
+    socket.emit('start data', {})
 
     // ユーザーが接続を切断した際に実行される（特に実装しない）
     socket.on('disconnect', () => {})
@@ -41,7 +41,7 @@ function createWebSocketServer(io, game) {
      * 全員に送信
      * volatileはクライアントにデータが届いたかを確認しない送信方法（高頻度な通信で便利）
      */
-    rootIo.volatile.emit('map-data', {})
+    rootIo.volatile.emit('map data', {})
   }, 66)
 }
 
