@@ -133,6 +133,20 @@ function drawSubmarine(ctxRader) {
 }
 
 /**
+ * WebSocketデータを受信した時の処理
+ * socket.on('イベント', () => { 処理 })
+ */
+socket.on('start data', startObj => {
+  // start dataという名前のイベントが来た時に実行される
+  console.log('start data came')
+})
+
+socket.on('map data', compressed => {
+  // map dataという名前のイベントが来た時に実行される
+  console.log('map data came')
+})
+
+/**
  * 角度をラジアンに変換する
  * @param {int} kakudo 角度
  */
