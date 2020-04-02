@@ -80,8 +80,12 @@ function getMapData() {
   const airArray = []
 
   for (let [socketId, player] of gameObj.playersMap) {
+    // プレイヤー情報の数だけループ
     const playerDataForSend = []
 
+    /**
+     * プレイヤー情報の値をセット
+     */
     playerDataForSend.push(player.x)
     playerDataForSend.push(player.y)
     playerDataForSend.push(player.playerId)
@@ -90,12 +94,17 @@ function getMapData() {
     playerDataForSend.push(player.direction)
     playerDataForSend.push(player.score)
 
+    // 上記のデータをまとめてplayersArrayに追加
     playersArray.push(playerDataForSend)
   }
 
   for (let [id, item] of gameObj.itemsMap) {
+    // ミサイルのアイテムの数だけループ
     const itemDataForSend = []
 
+    /**
+     * ミサイルのアイテムの値をセット
+     */
     itemDataForSend.push(item.x)
     itemDataForSend.push(item.y)
 
@@ -103,8 +112,12 @@ function getMapData() {
   }
 
   for (let [id, air] of gameObj.airMap) {
+    // 酸素のアイテムの数だけループ
     const airDataForSend = []
 
+    /**
+     * 酸素のアイテムの値をセット
+     */
     airDataForSend.push(air.x)
     airDataForSend.push(air.y)
 
@@ -112,4 +125,69 @@ function getMapData() {
   }
 
   return [playersArray, itemsArray, airArray]
+}
+
+/**
+ * プレイヤーの接続が切れた際はプレイヤー情報のMapから削除
+ * @param {int} socketId プレイヤーのsocketのid
+ */
+function disconnect(socketId) {
+  gameObj.playersMap.delete(socketId)
+}
+
+/**
+ * ミサイルのアイテムをMapに追加
+ */
+function addItem() {
+  // ミサイルのアイテムの初期座標を乱数で設定
+  const itemX = Math.floor(Math.random() * gameObj.fieldWidth)
+  const itemY = Math.floor(Math.random() * gameObj.fieldWidth)
+  // itemsMapのKey用
+  const itemKey = `${itemX},${itemY}`
+
+  if (gameObj.itemsMap.has(itemKey)) {
+    // アイテムの位置（座標）が被った場合はもう一回生成
+    return addItem()
+  }
+
+  // ミサイルアイテムの座標情報のオブジェクト生成
+  const itemObj = {
+    x: itemX,
+    y: itemY
+  }
+
+  // gameObjのitemsMapに追加
+  gameObj.itemsMap.set(itemKey, itemObj)
+}
+
+/**
+ * 酸素のアイテムをMapに追加
+ */
+function addAir() {
+  // 酸素のアイテムの初期座標を乱数で設定
+  const airX = Math.floor(Math.random() * gameObj.fieldWidth)
+  const airY = Math.floor(Math.random() * gameObj.fieldWidth)
+  // airMapのKey用
+  const airKey = `${airX},${airY}`
+
+  if (gameObj.airMap.has(airKey)) {
+    // アイテムの位置（座標）が被ったらもう一度生成
+    return addAir()
+  }
+
+  // 酸素アイテムの座標情報のオブジェクト生成
+  const airObj = {
+    x: airX,
+    y: airY
+  }
+
+  // gameObjのairMapに追加
+  gameObj.airMap.set(airKey, airObj)
+}
+
+// 上記関数をwebSocketServer.jsでも使えるようにモジュールとして登録
+module.exports = {
+  newConnection,
+  getMapData,
+  disconnect
 }
