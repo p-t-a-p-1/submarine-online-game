@@ -23,7 +23,7 @@ function init() {
     // ミサイルのアイテムの数だけ追加
     addItem()
   }
-  for (let a = 0; i < gameObj.airTotal; a++) {
+  for (let a = 0; a < gameObj.airTotal; a++) {
     // 酸素のアイテムの数だけ追加
     addAir()
   }
@@ -64,8 +64,8 @@ function newConnection(socketId, displayName, thumbUrl) {
   // ゲームの設定値をオブジェクトを入れて返す
   const startObj = {
     playerObj: playerObj,
-    fieldWidth: fieldWidth,
-    fieldHeight: fieldHeight
+    fieldWidth: gameObj.fieldWidth,
+    fieldHeight: gameObj.fieldHeight
   }
   return startObj
 }

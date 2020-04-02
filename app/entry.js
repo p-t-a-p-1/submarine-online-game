@@ -8,9 +8,15 @@ const gameObj = {
   raderCanvasHeight: 500,
   scoreCanvasWidth: 300,
   scoreCanvasHeight: 500,
+  itemRadius: 4, // ミサイルアイテムの大きさ（円なので半径radius）
+  airRadius: 5, // 酸素アイテムの大きさ（円なので半径radius）
   deg: 0,
   myDisplayName: $('#main').attr('data-displayName'),
-  myThumbUrl: $('#main').attr('data-thumbUrl')
+  myThumbUrl: $('#main').attr('data-thumbUrl'),
+  fieldWidth: null,
+  fieldHeight: null,
+  itemsMap: new Map(),
+  airMap: new Map()
 }
 
 // WebSocketを開始するクライアントのTwitterアカウント名とサムネをパラメータとして結合
@@ -138,12 +144,80 @@ function drawSubmarine(ctxRader) {
  */
 socket.on('start data', startObj => {
   // start dataという名前のイベントが来た時に実行される
-  console.log('start data came')
+
+  /**
+   * ゲームに参加した時にゲームの設定を受け取る
+   */
+  gameObj.fieldWidth = startObj.fieldWidth
+  gameObj.fieldHeight = startObj.fieldHeight
+  gameObj.myPlayerObj = startObj.playerObj
 })
 
 socket.on('map data', compressed => {
   // map dataという名前のイベントが来た時に実行される
-  console.log('map data came')
+  // 66ミリ秒ごとにデータが送られてくる
+
+  /**
+   * マップ情報を受け取る
+   */
+  // game.getMapData()でそれぞれ定義した値を参照
+  const playersArray = compressed[0]
+  const itemsArray = compressed[1]
+  const airArray = compressed[2]
+
+  gameObj.playersMap = new Map()
+  /**
+   * データの節約のためにオブジェクトではなく値だけを入れた配列を
+   * サーバーで送った通りgameObjに追加する
+   */
+  for (let compressedPlayerData of playersArray) {
+    const player = []
+    player.x = compressedPlayerData[0]
+    player.y = compressedPlayerData[1]
+    player.playerId = compressedPlayerData[2]
+    player.displayName = compressedPlayerData[3]
+    player.score = compressedPlayerData[4]
+    player.isAlive = compressedPlayerData[5]
+    player.direction = compressedPlayerData[6]
+
+    gameObj.playersMap.set(player.playerId, player)
+
+    if (player.playerId === gameObj.myPlayerObj.playerId) {
+      /**
+       * 自分自身の情報を更新する
+       */
+      gameObj.myPlayerObj.x = compressedPlayerData[0]
+      gameObj.myPlayerObj.y = compressedPlayerData[1]
+      gameObj.myPlayerObj.displayName = compressedPlayerData[3]
+      gameObj.myPlayerObj.score = compressedPlayerData[4]
+      gameObj.myPlayerObj.isAlive = compressedPlayerData[5]
+    }
+  }
+
+  /**
+   * ミサイルアイテムも値だけを入れた配列としていたので
+   * サーバーで送った通りgameObjに追加
+   */
+  gameObj.itemsMap = new Map()
+  itemsArray.forEach((compressedItemData, index) => {
+    // 座標情報
+    gameObj.itemsMap.set(index, {
+      x: compressedItemData[0],
+      y: compressedItemData[1]
+    })
+  })
+
+  gameObj.airMap = new Map()
+  airArray.forEach((compressedAirData, index) => {
+    gameObj.airMap.set(index, {
+      x: compressedAirData[0],
+      y: compressedAirData[1]
+    })
+  })
+
+  console.log(gameObj.playersMap)
+  console.log(gameObj.itemsMap)
+  console.log(gameObj.airMap)
 })
 
 /**
