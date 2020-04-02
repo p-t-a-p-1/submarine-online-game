@@ -1,8 +1,4 @@
 /**
- *
- */
-
-/**
  * WebSocketの待ち受けを開始する関数
  * @param {*} io
  * @param {*} game

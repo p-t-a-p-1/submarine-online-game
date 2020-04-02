@@ -69,3 +69,47 @@ function newConnection(socketId, displayName, thumbUrl) {
   }
   return startObj
 }
+
+/**
+ * ゲームのマップ情報を作成
+ * オブジェクトだと大きいデータになるので、値だけを入れて配列として返す
+ */
+function getMapData() {
+  const playersArray = []
+  const itemsArray = []
+  const airArray = []
+
+  for (let [socketId, player] of gameObj.playersMap) {
+    const playerDataForSend = []
+
+    playerDataForSend.push(player.x)
+    playerDataForSend.push(player.y)
+    playerDataForSend.push(player.playerId)
+    playerDataForSend.push(player.displayName)
+    playerDataForSend.push(player.isAlive)
+    playerDataForSend.push(player.direction)
+    playerDataForSend.push(player.score)
+
+    playersArray.push(playerDataForSend)
+  }
+
+  for (let [id, item] of gameObj.itemsMap) {
+    const itemDataForSend = []
+
+    itemDataForSend.push(item.x)
+    itemDataForSend.push(item.y)
+
+    itemsArray.push(itemDataForSend)
+  }
+
+  for (let [id, air] of gameObj.airMap) {
+    const airDataForSend = []
+
+    airDataForSend.push(air.x)
+    airDataForSend.push(air.y)
+
+    airArray.push(airDataForSend)
+  }
+
+  return [playersArray, itemsArray, airArray]
+}
