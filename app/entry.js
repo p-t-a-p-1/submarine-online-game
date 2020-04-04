@@ -4,8 +4,8 @@ import io from 'socket.io-client'
 
 // ゲームで使用するパラメータをオブジェクトにする
 const gameObj = {
-  raderCanvasWidth: 500,
-  raderCanvasHeight: 500,
+  radarCanvasWidth: 500,
+  radarCanvasHeight: 500,
   scoreCanvasWidth: 300,
   scoreCanvasHeight: 500,
   itemRadius: 4, // ミサイルアイテムの大きさ（円なので半径radius）
@@ -31,11 +31,11 @@ const socket = io(
  */
 function init() {
   // ゲーム用のキャンバス
-  const raderCanvas = $('#rader')[0]
-  raderCanvas.width = gameObj.raderCanvasWidth
-  raderCanvas.height = gameObj.raderCanvasHeight
+  const radarCanvas = $('#radar')[0]
+  radarCanvas.width = gameObj.radarCanvasWidth
+  radarCanvas.height = gameObj.radarCanvasHeight
   // canvasへの描画機能を有効化
-  gameObj.ctxRader = raderCanvas.getContext('2d')
+  gameObj.ctxRadar = radarCanvas.getContext('2d')
 
   // ランキング用のキャンバス
   const scoreCanvas = $('#score')[0]
@@ -60,19 +60,19 @@ function ticker() {
     return
   }
 
-  // canvas（#rader）の中身をまっさらにする
-  gameObj.ctxRader.clearRect(
+  // canvas（#radar）の中身をまっさらにする
+  gameObj.ctxRadar.clearRect(
     0,
     0,
-    gameObj.raderCanvasWidth,
-    gameObj.raderCanvasHeight
+    gameObj.radarCanvasWidth,
+    gameObj.radarCanvasHeight
   )
   // レーダーを描画
-  drawRader(gameObj.ctxRader)
+  drawRadar(gameObj.ctxRadar)
   // マップを描画
   drawMap(gameObj)
   // 潜水艦を描画
-  drawSubmarine(gameObj.ctxRader)
+  drawSubmarine(gameObj.ctxRadar)
 }
 // 33ミリ秒ごとに実行
 setInterval(ticker, 33)
@@ -80,69 +80,69 @@ setInterval(ticker, 33)
 /**
  * レーダーの描画処理
  * ※レーダーは半透明の緑色の扇を回転するようにして表現
- * @param {object} ctxRader レーダーの現在の状況
+ * @param {object} ctxRadar レーダーの現在の状況
  */
-function drawRader(ctxRader) {
+function drawRadar(ctxRadar) {
   // 中心座標のx軸
-  const x = gameObj.raderCanvasWidth / 2
+  const x = gameObj.radarCanvasWidth / 2
   // 中心座標のy軸
-  const y = gameObj.raderCanvasHeight / 2
+  const y = gameObj.radarCanvasHeight / 2
   // 半径 = 対角線の長さの半分とする
-  const r = (gameObj.raderCanvasWidth * 1.5) / 2
+  const r = (gameObj.radarCanvasWidth * 1.5) / 2
 
   // 現在のキャンバスの状態をセーブ
-  ctxRader.save()
+  ctxRadar.save()
 
   // 新しいレーダー描画開始
-  ctxRader.beginPath()
+  ctxRadar.beginPath()
   // レーダー画面の中央を(x, y)座標にする
-  ctxRader.translate(x, y)
+  ctxRadar.translate(x, y)
   // レーダーの座標をgameObj.deg度回転させる
-  ctxRader.rotate(getRadian(gameObj.deg))
+  ctxRadar.rotate(getRadian(gameObj.deg))
 
   // 描画するレーダーを半透明の緑色に設定
-  ctxRader.fillStyle = 'rgba(0, 220, 0, 0.5)'
+  ctxRadar.fillStyle = 'rgba(0, 220, 0, 0.5)'
 
   /**
    * 扇の弧の部分を原点(0, 0)を中心にして半径rで30度分描画する
    * → 上で原点を(x, y)にしてるので、canvasの中心から半径rの円弧を30度だけ描画することになる
    */
-  ctxRader.arc(0, 0, r, getRadian(0), getRadian(-30), true)
+  ctxRadar.arc(0, 0, r, getRadian(0), getRadian(-30), true)
   // 円弧を描いた筆で中心に向かって線を描画
-  ctxRader.lineTo(0, 0)
+  ctxRadar.lineTo(0, 0)
 
   // 描画したエリアを塗りつぶす
-  ctxRader.fill()
+  ctxRadar.fill()
 
   // 描画状態を保存した時点のものに戻す
-  ctxRader.restore()
+  ctxRadar.restore()
   // 角度を5度足す
   gameObj.deg = (gameObj.deg + 5) % 360
 }
 
 /**
  * 潜水艦の画像を表示する
- * @param {object} ctxRader レーダーの現在の状況
+ * @param {object} ctxRadar レーダーの現在の状況
  */
-function drawSubmarine(ctxRader) {
+function drawSubmarine(ctxRadar) {
   // canvasの状態を保存
-  ctxRader.save()
+  ctxRadar.save()
 
   // 座標をcanvasの中心に設定
-  ctxRader.translate(
-    gameObj.raderCanvasWidth / 2,
-    gameObj.raderCanvasHeight / 2
+  ctxRadar.translate(
+    gameObj.radarCanvasWidth / 2,
+    gameObj.radarCanvasHeight / 2
   )
 
   // 潜水艦画像の表示
-  ctxRader.drawImage(
+  ctxRadar.drawImage(
     gameObj.submarineImage, // 画像ファイル
     -(gameObj.submarineImage.width / 2), // x軸の表示位置（画像widthの半分の長さ分マイナス）
     -(gameObj.submarineImage.height / 2) // y軸の表示位置（画像heightの半分の長さ分マイナス）
   )
 
   // 描画状態を保存した時点のものに戻す
-  ctxRader.restore()
+  ctxRadar.restore()
 }
 
 /**
@@ -165,20 +165,20 @@ function drawMap(gameObj) {
       item.y,
       gameObj.fieldWidth,
       gameObj.fieldHeight,
-      gameObj.raderCanvasWidth,
-      gameObj.raderCanvasHeight
+      gameObj.radarCanvasWidth,
+      gameObj.radarCanvasHeight
     )
 
     if (
-      distanceObj.distanceX <= gameObj.raderCanvasWidth / 2 &&
-      distanceObj.distanceY <= gameObj.raderCanvasHeight / 2
+      distanceObj.distanceX <= gameObj.radarCanvasWidth / 2 &&
+      distanceObj.distanceY <= gameObj.radarCanvasHeight / 2
     ) {
       /**
        * レーダーの半径内に存在するアイテムのみ描画
        */
 
       // アイテムとレーダーの角度の差を計算
-      const degreeDiff = calcDegreeDiffFromRader(
+      const degreeDiff = calcDegreeDiffFromRadar(
         gameObj.deg,
         distanceObj.degree
       )
@@ -186,13 +186,13 @@ function drawMap(gameObj) {
       const toumeido = calcOpacity(degreeDiff)
 
       // オレンジ（透明度は潜水艦からの距離によって変わる）
-      gameObj.ctxRader.fillStyle = `rgba(255, 165, 0, ${toumeido})`
+      gameObj.ctxRadar.fillStyle = `rgba(255, 165, 0, ${toumeido})`
       // 描画処理開始
-      gameObj.ctxRader.beginPath()
+      gameObj.ctxRadar.beginPath()
       /**
        * 半径がgameObj.itemRadiusの円を描画
        */
-      gameObj.ctxRader.arc(
+      gameObj.ctxRadar.arc(
         distanceObj.drawX,
         distanceObj.drawY,
         gameObj.itemRadius,
@@ -201,7 +201,7 @@ function drawMap(gameObj) {
         true
       )
       // 描画範囲塗りつぶす
-      gameObj.ctxRader.fill()
+      gameObj.ctxRadar.fill()
     }
   }
 
@@ -218,13 +218,13 @@ function drawMap(gameObj) {
       airObj.y,
       gameObj.fieldWidth,
       gameObj.fieldHeight,
-      gameObj.raderCanvasWidth,
-      gameObj.raderCanvasHeight
+      gameObj.radarCanvasWidth,
+      gameObj.radarCanvasHeight
     )
 
     if (
-      distanceObj.distanceX <= gameObj.raderCanvasWidth / 2 &&
-      distanceObj.distanceY <= gameObj.raderCanvasHeight / 2
+      distanceObj.distanceX <= gameObj.radarCanvasWidth / 2 &&
+      distanceObj.distanceY <= gameObj.radarCanvasHeight / 2
     ) {
       const degreeDiff = calcDegreeDiffFromRadar(
         gameObj.deg,
@@ -232,9 +232,9 @@ function drawMap(gameObj) {
       )
       const toumeido = calcOpacity(degreeDiff)
 
-      gameObj.ctxRader.fillStyle = `rgb(0, 220, 255, ${toumeido})`
-      gameObj.ctxRader.beginPath()
-      gameObj.ctxRader.arc(
+      gameObj.ctxRadar.fillStyle = `rgb(0, 220, 255, ${toumeido})`
+      gameObj.ctxRadar.beginPath()
+      gameObj.ctxRadar.arc(
         distanceObj.drawX,
         distanceObj.drawY,
         gameObj.airRadius,
@@ -242,7 +242,7 @@ function drawMap(gameObj) {
         Math.PI * 2,
         true
       )
-      gameObj.ctxRader.fill()
+      gameObj.ctxRadar.fill()
     }
   }
 }
@@ -349,8 +349,8 @@ function getRadian(kakudo) {
  * @param {int} oY
  * @param {int} gameWidth
  * @param {int} gameHeight
- * @param {int} raderCanvasWidth
- * @param {int} raderCanvasHeight
+ * @param {int} radarCanvasWidth
+ * @param {int} radarCanvasHeight
  */
 function calculationBetweenTwoPoints(
   pX, // プレイヤーのx
@@ -359,8 +359,8 @@ function calculationBetweenTwoPoints(
   oY, // オブジェクトのy
   gameWidth, // ゲーム全体の横幅
   gameHeight, // ゲーム全体の縦幅
-  raderCanvasWidth, // 表示可能エリアの横幅
-  raderCanvasHeight // 表示可能エリアの縦幅
+  radarCanvasWidth, // 表示可能エリアの横幅
+  radarCanvasHeight // 表示可能エリアの縦幅
 ) {
   let distanceX = 99999999
   let distanceY = 99999999
@@ -380,22 +380,22 @@ function calculationBetweenTwoPoints(
   if (px <= oX) {
     // 右から
     distanceX = oX - px
-    drawX = raderCanvasWidth / 2 + distanceX
+    drawX = radarCanvasWidth / 2 + distanceX
     let tmpDistance = ox + gameWidth - px
     if (distanceX > tmpDistance) {
       // 近い方を距離とする
       distanceX = tmpDistance
-      drawX = raderCanvasWidth / 2 - distanceX
+      drawX = radarCanvasWidth / 2 - distanceX
     }
   } else {
     // 左から
     distanceX = pX - oX
-    drawX = raderCanvasWidth / 2 - distanceX
+    drawX = radarCanvasWidth / 2 - distanceX
     // 右から
     let tmpDistance = oX + gameWidth - pX
     if (distanceX > tmpDistance) {
       distanceX = tmpDistance
-      drawX = raderCanvasWidth / 2 + distanceX
+      drawX = radarCanvasWidth / 2 + distanceX
     }
   }
 
@@ -405,22 +405,22 @@ function calculationBetweenTwoPoints(
   if (pY <= oY) {
     // 下から
     distanceY = oY - pY
-    drawY = raderCanvasHeight / 2 + distanceY
+    drawY = radarCanvasHeight / 2 + distanceY
     // 上から
     let tmpDistance = pY + gameHeight - oY
     if (distanceY > tmpDistance) {
       distanceY = tmpDistance
-      drawY = raderCanvasHeight / 2 - distanceY
+      drawY = radarCanvasHeight / 2 - distanceY
     }
   } else {
     // 上から
     distanceY = pY - oY
-    drawY = raderCanvasHeight / 2 - distanceY
+    drawY = radarCanvasHeight / 2 - distanceY
     // 下から
     let tmpDistance = oY + gameHeight - pY
     if (distanceY > tmpDistance) {
       distanceY = tmpDistance
-      drawY = raderCanvasHeight / 2 + distanceY
+      drawY = radarCanvasHeight / 2 + distanceY
     }
   }
 
@@ -428,8 +428,8 @@ function calculationBetweenTwoPoints(
   const degree = calcTwoPointsDegree(
     drawX,
     drawY,
-    raderCanvasWidth / 2,
-    raderCanvasHeight / 2
+    radarCanvasWidth / 2,
+    radarCanvasHeight / 2
   )
 
   return {
@@ -449,7 +449,9 @@ function calculationBetweenTwoPoints(
  * @param {int} y2
  */
 function calcTwoPointsDegree(x1, y1, x2, y2) {
+  // アークタンジェントを用いてラジアン（弧度法での値）を求める
   const radian = Math.atan2(y2 - y1, x2 - x1)
+  // ラジアンを角度に変換
   const degree = (radian * 180) / Math.PI + 180
   return degree
 }
