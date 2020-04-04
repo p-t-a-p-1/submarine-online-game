@@ -3,7 +3,7 @@ body {
   text-align: center;
 }
 
-canvas#rader {
+canvas#radar {
   border-radius: 50px;
   background-color: rgba(00, 20, 50, 1);
 }

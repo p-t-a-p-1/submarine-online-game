@@ -377,11 +377,11 @@ function calculationBetweenTwoPoints(
   /**
    * x座標のプレイヤーとオブジェクトの距離
    */
-  if (px <= oX) {
+  if (pX <= oX) {
     // 右から
-    distanceX = oX - px
+    distanceX = oX - pX
     drawX = radarCanvasWidth / 2 + distanceX
-    let tmpDistance = ox + gameWidth - px
+    let tmpDistance = oX + gameWidth - pX
     if (distanceX > tmpDistance) {
       // 近い方を距離とする
       distanceX = tmpDistance
@@ -469,4 +469,16 @@ function calcDegreeDiffFromRadar(degRadar, degItem) {
     diff += 360
   }
   return diff
+}
+
+/**
+ * レーダーとの距離からアイテムの透明度を計算
+ * 1が完全に透明、0 ~ 1の間
+ * @param {int} degreeDiff アイテムとレーダーの角度の差
+ */
+function calcOpacity(degreeDiff) {
+  const deleteDeg = 270
+  // 角度が270より大きい場合は270にして透明度を1にしてにして消す
+  degreeDiff = degreeDiff > deleteDeg ? deleteDeg : degreeDiff
+  return (1 - degreeDiff / deleteDeg).toFixed(2)
 }

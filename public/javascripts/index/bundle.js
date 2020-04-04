@@ -5747,6 +5747,8 @@ module.exports = function(obj, fn){
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _jquery = __webpack_require__(26);
 
 var _jquery2 = _interopRequireDefault(_jquery);
@@ -5759,8 +5761,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // ゲームで使用するパラメータをオブジェクトにする
 var gameObj = {
-  raderCanvasWidth: 500,
-  raderCanvasHeight: 500,
+  radarCanvasWidth: 500,
+  radarCanvasHeight: 500,
   scoreCanvasWidth: 300,
   scoreCanvasHeight: 500,
   itemRadius: 4, // ミサイルアイテムの大きさ（円なので半径radius）
@@ -5783,11 +5785,11 @@ var socket = (0, _socket2.default)((0, _jquery2.default)('#main').attr('data-ipA
  */
 function init() {
   // ゲーム用のキャンバス
-  var raderCanvas = (0, _jquery2.default)('#rader')[0];
-  raderCanvas.width = gameObj.raderCanvasWidth;
-  raderCanvas.height = gameObj.raderCanvasHeight;
+  var radarCanvas = (0, _jquery2.default)('#radar')[0];
+  radarCanvas.width = gameObj.radarCanvasWidth;
+  radarCanvas.height = gameObj.radarCanvasHeight;
   // canvasへの描画機能を有効化
-  gameObj.ctxRader = raderCanvas.getContext('2d');
+  gameObj.ctxRadar = radarCanvas.getContext('2d');
 
   // ランキング用のキャンバス
   var scoreCanvas = (0, _jquery2.default)('#score')[0];
@@ -5807,12 +5809,19 @@ init();
  * 時計の針のようにゲームの時を刻む
  */
 function ticker() {
-  // canvas（#rader）の中身をまっさらにする
-  gameObj.ctxRader.clearRect(0, 0, gameObj.raderCanvasWidth, gameObj.raderCanvasHeight);
+  if (!gameObj.myPlayerObj || !gameObj.playersMap) {
+    // サーバーからデータを受け取っていない場合はマップを描画しない
+    return;
+  }
+
+  // canvas（#radar）の中身をまっさらにする
+  gameObj.ctxRadar.clearRect(0, 0, gameObj.radarCanvasWidth, gameObj.radarCanvasHeight);
   // レーダーを描画
-  drawRader(gameObj.ctxRader);
+  drawRadar(gameObj.ctxRadar);
+  // マップを描画
+  drawMap(gameObj);
   // 潜水艦を描画
-  drawSubmarine(gameObj.ctxRader);
+  drawSubmarine(gameObj.ctxRadar);
 }
 // 33ミリ秒ごとに実行
 setInterval(ticker, 33);
@@ -5820,65 +5829,176 @@ setInterval(ticker, 33);
 /**
  * レーダーの描画処理
  * ※レーダーは半透明の緑色の扇を回転するようにして表現
- * @param {object} ctxRader レーダーの現在の状況
+ * @param {object} ctxRadar レーダーの現在の状況
  */
-function drawRader(ctxRader) {
+function drawRadar(ctxRadar) {
   // 中心座標のx軸
-  var x = gameObj.raderCanvasWidth / 2;
+  var x = gameObj.radarCanvasWidth / 2;
   // 中心座標のy軸
-  var y = gameObj.raderCanvasHeight / 2;
+  var y = gameObj.radarCanvasHeight / 2;
   // 半径 = 対角線の長さの半分とする
-  var r = gameObj.raderCanvasWidth * 1.5 / 2;
+  var r = gameObj.radarCanvasWidth * 1.5 / 2;
 
   // 現在のキャンバスの状態をセーブ
-  ctxRader.save();
+  ctxRadar.save();
 
   // 新しいレーダー描画開始
-  ctxRader.beginPath();
+  ctxRadar.beginPath();
   // レーダー画面の中央を(x, y)座標にする
-  ctxRader.translate(x, y);
+  ctxRadar.translate(x, y);
   // レーダーの座標をgameObj.deg度回転させる
-  ctxRader.rotate(getRadian(gameObj.deg));
+  ctxRadar.rotate(getRadian(gameObj.deg));
 
   // 描画するレーダーを半透明の緑色に設定
-  ctxRader.fillStyle = 'rgba(0, 220, 0, 0.5)';
+  ctxRadar.fillStyle = 'rgba(0, 220, 0, 0.5)';
 
   /**
    * 扇の弧の部分を原点(0, 0)を中心にして半径rで30度分描画する
    * → 上で原点を(x, y)にしてるので、canvasの中心から半径rの円弧を30度だけ描画することになる
    */
-  ctxRader.arc(0, 0, r, getRadian(0), getRadian(-30), true);
+  ctxRadar.arc(0, 0, r, getRadian(0), getRadian(-30), true);
   // 円弧を描いた筆で中心に向かって線を描画
-  ctxRader.lineTo(0, 0);
+  ctxRadar.lineTo(0, 0);
 
   // 描画したエリアを塗りつぶす
-  ctxRader.fill();
+  ctxRadar.fill();
 
   // 描画状態を保存した時点のものに戻す
-  ctxRader.restore();
+  ctxRadar.restore();
   // 角度を5度足す
   gameObj.deg = (gameObj.deg + 5) % 360;
 }
 
 /**
  * 潜水艦の画像を表示する
- * @param {object} ctxRader レーダーの現在の状況
+ * @param {object} ctxRadar レーダーの現在の状況
  */
-function drawSubmarine(ctxRader) {
+function drawSubmarine(ctxRadar) {
   // canvasの状態を保存
-  ctxRader.save();
+  ctxRadar.save();
 
   // 座標をcanvasの中心に設定
-  ctxRader.translate(gameObj.raderCanvasWidth / 2, gameObj.raderCanvasHeight / 2);
+  ctxRadar.translate(gameObj.radarCanvasWidth / 2, gameObj.radarCanvasHeight / 2);
 
   // 潜水艦画像の表示
-  ctxRader.drawImage(gameObj.submarineImage, // 画像ファイル
+  ctxRadar.drawImage(gameObj.submarineImage, // 画像ファイル
   -(gameObj.submarineImage.width / 2), // x軸の表示位置（画像widthの半分の長さ分マイナス）
   -(gameObj.submarineImage.height / 2) // y軸の表示位置（画像heightの半分の長さ分マイナス）
   );
 
   // 描画状態を保存した時点のものに戻す
-  ctxRader.restore();
+  ctxRadar.restore();
+}
+
+/**
+ * マップの描画
+ * @param {Object} gameObj
+ */
+function drawMap(gameObj) {
+  /**
+   * アイテムの描画
+   * レーダー近い場合はくっきりと描画、遠い場合は透明度をあげてうっすらとさせる
+   */
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = gameObj.itemsMap[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var _ref = _step.value;
+
+      var _ref2 = _slicedToArray(_ref, 2);
+
+      var index = _ref2[0];
+      var item = _ref2[1];
+
+      // アイテムの個数分ループ
+
+      // ２つの物の距離を計算
+      var distanceObj = calculationBetweenTwoPoints(gameObj.myPlayerObj.x, gameObj.myPlayerObj.y, item.x, item.y, gameObj.fieldWidth, gameObj.fieldHeight, gameObj.radarCanvasWidth, gameObj.radarCanvasHeight);
+
+      if (distanceObj.distanceX <= gameObj.radarCanvasWidth / 2 && distanceObj.distanceY <= gameObj.radarCanvasHeight / 2) {
+        /**
+         * レーダーの半径内に存在するアイテムのみ描画
+         */
+
+        // アイテムとレーダーの角度の差を計算
+        var degreeDiff = calcDegreeDiffFromRadar(gameObj.deg, distanceObj.degree);
+        // 透明度
+        var toumeido = calcOpacity(degreeDiff);
+
+        // オレンジ（透明度は潜水艦からの距離によって変わる）
+        gameObj.ctxRadar.fillStyle = 'rgba(255, 165, 0, ' + toumeido + ')';
+        // 描画処理開始
+        gameObj.ctxRadar.beginPath();
+        /**
+         * 半径がgameObj.itemRadiusの円を描画
+         */
+        gameObj.ctxRadar.arc(distanceObj.drawX, distanceObj.drawY, gameObj.itemRadius, 0, Math.PI * 2, true);
+        // 描画範囲塗りつぶす
+        gameObj.ctxRadar.fill();
+      }
+    }
+
+    /**
+     * 酸素の描画（↑の処理と同じ）
+     */
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = gameObj.airMap[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var _ref3 = _step2.value;
+
+      var _ref4 = _slicedToArray(_ref3, 2);
+
+      var airKey = _ref4[0];
+      var airObj = _ref4[1];
+
+      // 酸素の数だけループ
+
+      var distanceObj = calculationBetweenTwoPoints(gameObj.myPlayerObj.x, gameObj.myPlayerObj.y, airObj.x, airObj.y, gameObj.fieldWidth, gameObj.fieldHeight, gameObj.radarCanvasWidth, gameObj.radarCanvasHeight);
+
+      if (distanceObj.distanceX <= gameObj.radarCanvasWidth / 2 && distanceObj.distanceY <= gameObj.radarCanvasHeight / 2) {
+        var _degreeDiff = calcDegreeDiffFromRadar(gameObj.deg, distanceObj.degree);
+        var _toumeido = calcOpacity(_degreeDiff);
+
+        gameObj.ctxRadar.fillStyle = 'rgb(0, 220, 255, ' + _toumeido + ')';
+        gameObj.ctxRadar.beginPath();
+        gameObj.ctxRadar.arc(distanceObj.drawX, distanceObj.drawY, gameObj.airRadius, 0, Math.PI * 2, true);
+        gameObj.ctxRadar.fill();
+      }
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
 }
 
 /**
@@ -5913,13 +6033,13 @@ socket.on('map data', function (compressed) {
    * データの節約のためにオブジェクトではなく値だけを入れた配列を
    * サーバーで送った通りgameObjに追加する
    */
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
   try {
-    for (var _iterator = playersArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var compressedPlayerData = _step.value;
+    for (var _iterator3 = playersArray[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var compressedPlayerData = _step3.value;
 
       var player = [];
       player.x = compressedPlayerData[0];
@@ -5943,23 +6063,29 @@ socket.on('map data', function (compressed) {
         gameObj.myPlayerObj.isAlive = compressedPlayerData[5];
       }
     }
+
+    /**
+     * ミサイルアイテムも値だけを入れた配列としていたので
+     * サーバーで送った通りgameObjに追加
+     */
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
       }
     } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
+      if (_didIteratorError3) {
+        throw _iteratorError3;
       }
     }
   }
 
   gameObj.itemsMap = new Map();
   itemsArray.forEach(function (compressedItemData, index) {
+    // 座標情報
     gameObj.itemsMap.set(index, {
       x: compressedItemData[0],
       y: compressedItemData[1]
@@ -5974,9 +6100,12 @@ socket.on('map data', function (compressed) {
     });
   });
 
-  console.log(gameObj.playersMap);
-  console.log(gameObj.itemsMap);
-  console.log(gameObj.airMap);
+  // プレイヤー情報をまとめたMap
+  // console.log(gameObj.playersMap)
+  // ミサイルアイテム情報をまとめたMap
+  // console.log(gameObj.itemsMap)
+  // 酸素アイテム情報をまとめたMap
+  // console.log(gameObj.airMap)
 });
 
 /**
@@ -5986,6 +6115,142 @@ socket.on('map data', function (compressed) {
 function getRadian(kakudo) {
   // radian = 角度 * π / 180
   return kakudo * Math.PI / 180;
+}
+
+/**
+ * 2つの物の距離を計算
+ * @param {int} pX
+ * @param {int} pY
+ * @param {int} oX
+ * @param {int} oY
+ * @param {int} gameWidth
+ * @param {int} gameHeight
+ * @param {int} radarCanvasWidth
+ * @param {int} radarCanvasHeight
+ */
+function calculationBetweenTwoPoints(pX, // プレイヤーのx
+pY, // プレイヤーのy
+oX, // オブジェクトのx
+oY, // オブジェクトのy
+gameWidth, // ゲーム全体の横幅
+gameHeight, // ゲーム全体の縦幅
+radarCanvasWidth, // 表示可能エリアの横幅
+radarCanvasHeight // 表示可能エリアの縦幅
+) {
+  var distanceX = 99999999;
+  var distanceY = 99999999;
+  // 描画するx座標
+  var drawX = null;
+  // 描画するy座標
+  var drawY = null;
+
+  /**
+   * マップは地球のように端と端がつながっているので
+   * 左から と 右から の距離を計算し、より近い方を距離とする
+   */
+
+  /**
+   * x座標のプレイヤーとオブジェクトの距離
+   */
+  if (pX <= oX) {
+    // 右から
+    distanceX = oX - pX;
+    drawX = radarCanvasWidth / 2 + distanceX;
+    var tmpDistance = oX + gameWidth - pX;
+    if (distanceX > tmpDistance) {
+      // 近い方を距離とする
+      distanceX = tmpDistance;
+      drawX = radarCanvasWidth / 2 - distanceX;
+    }
+  } else {
+    // 左から
+    distanceX = pX - oX;
+    drawX = radarCanvasWidth / 2 - distanceX;
+    // 右から
+    var _tmpDistance = oX + gameWidth - pX;
+    if (distanceX > _tmpDistance) {
+      distanceX = _tmpDistance;
+      drawX = radarCanvasWidth / 2 + distanceX;
+    }
+  }
+
+  /**
+   * y座標のプレイヤーとオブジェクトの距離
+   */
+  if (pY <= oY) {
+    // 下から
+    distanceY = oY - pY;
+    drawY = radarCanvasHeight / 2 + distanceY;
+    // 上から
+    var _tmpDistance2 = pY + gameHeight - oY;
+    if (distanceY > _tmpDistance2) {
+      distanceY = _tmpDistance2;
+      drawY = radarCanvasHeight / 2 - distanceY;
+    }
+  } else {
+    // 上から
+    distanceY = pY - oY;
+    drawY = radarCanvasHeight / 2 - distanceY;
+    // 下から
+    var _tmpDistance3 = oY + gameHeight - pY;
+    if (distanceY > _tmpDistance3) {
+      distanceY = _tmpDistance3;
+      drawY = radarCanvasHeight / 2 + distanceY;
+    }
+  }
+
+  // プレイヤーとオブジェクトの角度を求める
+  var degree = calcTwoPointsDegree(drawX, drawY, radarCanvasWidth / 2, radarCanvasHeight / 2);
+
+  return {
+    distanceX: distanceX, // 距離（x座標）
+    distanceY: distanceY, // 距離（y座標）
+    drawX: drawX, // 描画するx座標
+    drawY: drawY, // 描画するy座標
+    degree: degree // プレイヤーとオブジェクトの角度
+  };
+}
+
+/**
+ * 2点間の角度を求める
+ * @param {int} x1
+ * @param {int} y1
+ * @param {int} x2
+ * @param {int} y2
+ */
+function calcTwoPointsDegree(x1, y1, x2, y2) {
+  // アークタンジェントを用いてラジアン（弧度法での値）を求める
+  var radian = Math.atan2(y2 - y1, x2 - x1);
+  // ラジアンを角度に変換
+  var degree = radian * 180 / Math.PI + 180;
+  return degree;
+}
+
+/**
+ * アイテムとレーダーの角度の差を計算
+ * ※ レーダーが通ったばかりのアイテムは距離が近く、徐々に反応を薄くさせる
+ * @param {int} degRadar レーダーの角度
+ * @param {int} degItem アイテムの角度
+ */
+function calcDegreeDiffFromRadar(degRadar, degItem) {
+  var diff = degRadar - degItem;
+  if (diff < 0) {
+    // レーダーより角度が大きい場合は１周分足す
+    diff += 360;
+  }
+  return diff;
+}
+
+/**
+ * レーダーとの距離からアイテムの透明度を計算
+ * 1が完全に透明、0 ~ 1の間
+ * @param {int} degreeDiff アイテムとレーダーの角度の差
+ */
+function calcOpacity(degreeDiff) {
+  var deleteDeg = 270;
+  // 角度が270より大きい場合は270にして透明度を1にしてにして消す
+  degreeDiff = degreeDiff > deleteDeg ? deleteDeg : degreeDiff;
+  return (1 - degreeDiff / deleteDeg).toFixed(2);
 }
 
 /***/ }),
