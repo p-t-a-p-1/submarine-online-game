@@ -455,3 +455,18 @@ function calcTwoPointsDegree(x1, y1, x2, y2) {
   const degree = (radian * 180) / Math.PI + 180
   return degree
 }
+
+/**
+ * アイテムとレーダーの角度の差を計算
+ * ※ レーダーが通ったばかりのアイテムは距離が近く、徐々に反応を薄くさせる
+ * @param {int} degRadar レーダーの角度
+ * @param {int} degItem アイテムの角度
+ */
+function calcDegreeDiffFromRadar(degRadar, degItem) {
+  let diff = degRadar - degItem
+  if (diff < 0) {
+    // レーダーより角度が大きい場合は１周分足す
+    diff += 360
+  }
+  return diff
+}
