@@ -51,6 +51,12 @@ function init() {
 }
 init()
 
+// サーバーでプレイヤーを移動させる処理を33ミリ秒ごとに実行させる
+const gameTicker = setInterval(() => {
+  // 潜水艦の移動
+  movePlayers(gameObj.playersMap)
+}, 33)
+
 /**
  * 時計の針のようにゲームの時を刻む
  */
@@ -481,4 +487,56 @@ function calcOpacity(degreeDiff) {
   // 角度が270より大きい場合は270にして透明度を1にしてにして消す
   degreeDiff = degreeDiff > deleteDeg ? deleteDeg : degreeDiff
   return (1 - degreeDiff / deleteDeg).toFixed(2)
+}
+
+/**
+ * 潜水艦を移動させる
+ * @param {object} playersMap
+ */
+function movePlayers(playersMap) {
+  for (let [playerId, player] of playersMap) {
+    /**
+     * プレイヤーごとに方向情報を取得し座標を移動する
+     */
+
+    if (player.isAlive === false) {
+      // プレイヤーが生存していない場合はスキップ
+      continue
+    }
+
+    switch (player.direction) {
+      /**
+       * 左上が（0, 0）
+       */
+      case 'left':
+        player.x -= 1
+        break
+      case 'up':
+        player.y -= 1
+        break
+      case 'right':
+        player.x += 1
+        break
+      case 'down':
+        player.y += 1
+        break
+    }
+
+    if (player.x > gameObj.fieldWidth) {
+      // ゲームエリアの右端に到達した場合は左端にx座標を移動
+      player.x -= gameObj.fieldWidth
+    }
+    if (player.x < 0) {
+      // ゲームエリアの左端に到達した場合は右端にx座標を移動
+      player.x += gameObj.fieldWidth
+    }
+    if (player.y < 0) {
+      // ゲームエリアの上端に到達した場合は下端にy座標を移動
+      player.y += gameObj.fieldHeight
+    }
+    if (player.y > gameObj.fieldHeight) {
+      // ゲームエリアの下端に到達した場合は上端にy座標を移動
+      player.y -= gameObj.fieldHeight
+    }
+  }
 }

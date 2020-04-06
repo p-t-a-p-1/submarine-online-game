@@ -5805,6 +5805,12 @@ function init() {
 }
 init();
 
+// サーバーでプレイヤーを移動させる処理を33ミリ秒ごとに実行させる
+var gameTicker = setInterval(function () {
+  // 潜水艦の移動
+  movePlayers(gameObj.playersMap);
+}, 33);
+
 /**
  * 時計の針のようにゲームの時を刻む
  */
@@ -6251,6 +6257,84 @@ function calcOpacity(degreeDiff) {
   // 角度が270より大きい場合は270にして透明度を1にしてにして消す
   degreeDiff = degreeDiff > deleteDeg ? deleteDeg : degreeDiff;
   return (1 - degreeDiff / deleteDeg).toFixed(2);
+}
+
+/**
+ * 潜水艦を移動させる
+ * @param {object} playersMap
+ */
+function movePlayers(playersMap) {
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
+
+  try {
+    for (var _iterator4 = playersMap[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      var _ref5 = _step4.value;
+
+      var _ref6 = _slicedToArray(_ref5, 2);
+
+      var playerId = _ref6[0];
+      var player = _ref6[1];
+
+      /**
+       * プレイヤーごとに方向情報を取得し座標を移動する
+       */
+
+      if (player.isAlive === false) {
+        // プレイヤーが生存していない場合はスキップ
+        continue;
+      }
+
+      switch (player.direction) {
+        /**
+         * 左上が（0, 0）
+         */
+        case 'left':
+          player.x -= 1;
+          break;
+        case 'up':
+          player.y -= 1;
+          break;
+        case 'right':
+          player.x += 1;
+          break;
+        case 'down':
+          player.y += 1;
+          break;
+      }
+
+      if (player.x > gameObj.fieldWidth) {
+        // ゲームエリアの右端に到達した場合は左端にx座標を移動
+        player.x -= gameObj.fieldWidth;
+      }
+      if (player.x < 0) {
+        // ゲームエリアの左端に到達した場合は右端にx座標を移動
+        player.x += gameObj.fieldWidth;
+      }
+      if (player.y < 0) {
+        // ゲームエリアの上端に到達した場合は下端にy座標を移動
+        player.y += gameObj.fieldHeight;
+      }
+      if (player.y > gameObj.fieldHeight) {
+        // ゲームエリアの下端に到達した場合は上端にy座標を移動
+        player.y -= gameObj.fieldHeight;
+      }
+    }
+  } catch (err) {
+    _didIteratorError4 = true;
+    _iteratorError4 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+        _iterator4.return();
+      }
+    } finally {
+      if (_didIteratorError4) {
+        throw _iteratorError4;
+      }
+    }
+  }
 }
 
 /***/ }),
